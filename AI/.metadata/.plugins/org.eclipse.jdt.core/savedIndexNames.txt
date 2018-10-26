@@ -1,0 +1,5 @@
+INDEX VERSION 1.126+/home/ccoew/4403/AI/.metadata/.plugins/org.eclipse.jdt.core
+2786329567.index
+2900120763.index
+1378664341.index
+4200122353.index

@@ -1,0 +1,81 @@
+%%cu
+
+#include <stdio.h>
+#include<cuda.h>
+#include <stdlib.h>
+#include<time.h>
+
+
+__global__ void matrixvectmult(int *mat,int *vect,int *res,int SIZE);
+
+
+int main(void)
+{
+	int i,j;
+  int SIZE=4;
+	int a[SIZE][SIZE],b[SIZE],c[SIZE];
+
+	int *dev_a,*dev_b,*dev_c;
+
+	cudaMalloc(&dev_a, SIZE*SIZE*sizeof(int));
+	cudaMalloc(&dev_b, SIZE*sizeof(int));
+	cudaMalloc(&dev_c, SIZE*sizeof(int));
+
+	for(i=0;i<SIZE;i++)
+	{
+		for(j=0;j<SIZE;j++)
+		{
+			a[i][j] = rand()%2;
+		}
+	}
+
+	printf("\nThe matrix is:\n");
+	for(i=0;i<SIZE;i++)
+	{
+		for(j=0;j<SIZE;j++)
+		{
+			printf("%d ",a[i][j]);
+		}
+		printf("\n");
+	}
+
+	for(i=0;i<SIZE;i++)
+	{
+		b[i] = rand()%5+1;
+	}
+
+	printf("\nThe vector is:\n");
+	for(i=0;i<SIZE;i++)
+	{
+		printf("%d  ",b[i]);
+	}
+
+	cudaMemcpy(dev_a,a,sizeof(int)*SIZE*SIZE,cudaMemcpyHostToDevice);
+	cudaMemcpy(dev_b,b,sizeof(int)*SIZE,cudaMemcpyHostToDevice);
+    
+	matrixvectmult<<<2,SIZE/2>>>(dev_a,dev_b,dev_c,SIZE);
+	
+  cudaMemcpy(&c,dev_c,sizeof(int)*SIZE,cudaMemcpyDeviceToHost);
+
+	printf("\nThe result is:\n");
+	for(int i=0;i<SIZE;i++)
+	{
+		printf("%d ",c[i]);
+	}
+
+
+	return 0;
+}
+
+__global__ void matrixvectmult(int *mat,int *vect,int *res,int SIZE)
+{
+	int tid=blockIdx.x*blockDim.x +threadIdx.x;
+	int mult=0;
+ // if(tid<SIZE) {
+    for(int i=0;i<SIZE;i++)
+    {
+      mult=mult+(mat[tid*SIZE+i]*vect[i]);
+    }
+    res[tid]=mult;
+   //}
+}

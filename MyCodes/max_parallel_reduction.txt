@@ -1,0 +1,81 @@
+%%cu
+using namespace std;
+#include<iostream>
+#include<stdio.h>
+
+
+__global__ void max(int *d_a,int *d_t,int size) ;
+
+int main() {
+    
+    int size =10;
+    int *a = new int[size];
+    int* t=new int[size];
+    int *d_t,*d_a;
+    
+    
+    for(int i=0;i<size;i++) {
+        a[i]=rand()%30;
+        cout<<a[i]<<" ";
+    }
+    if(cudaMalloc(&d_a,sizeof(int)*size)!=cudaSuccess) {
+        cout<<"problem allocating device memory for a";
+    }
+    if(cudaMalloc(&d_t,sizeof(int)*size)!=cudaSuccess) {
+        cout<<"problem allocating device memory for threads";
+    }
+    
+    
+    if(cudaMemcpy(d_a,a,sizeof(int)*size,cudaMemcpyHostToDevice)!=cudaSuccess) {
+        cout<<"problem copying memory to device ";
+    }
+    
+    dim3 b(1);
+    dim3 th(size);
+    max<<<b,th>>>(d_a,d_t,size);
+    
+    
+    if(cudaMemcpy(t,d_t,sizeof(int)*size,cudaMemcpyDeviceToHost)!=cudaSuccess) {
+        cout<<"problem copying memory to device at t";
+    }
+    
+    if(cudaMemcpy(a,d_a,sizeof(int)*size,cudaMemcpyDeviceToHost)!=cudaSuccess) {
+        cout<<"problem copying memory to device at a";
+    }
+    
+    
+    cout<<"Max Element is : "<<a[0];
+    for(int i=0;i<size;i++) {
+        
+        cout<<" "<< a[i]<<" ";
+    }
+    
+    for(int i=0;i<size;i++) {
+        
+        cout<<" "<< t[i]<<" ";
+    }
+    return 0;
+}
+
+__global__ void max(int *d_a,int *d_t,int size) {
+    
+    int tid = blockDim.x*blockIdx.x + threadIdx.x;
+    d_t[tid]=tid; 
+    
+    for(unsigned int s=size/2;s>0;s=s/2) {
+     
+        if(tid<s) {
+           
+            if(d_a[tid]<d_a[tid+s]) {
+                d_a[tid]=d_a[tid+s];
+            }
+            
+        }
+        if(s%2==1 && s!=1) {
+            s=s+1;
+        }
+          __syncthreads();
+           
+      }
+    
+}
